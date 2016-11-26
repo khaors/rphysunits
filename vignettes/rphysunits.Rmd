@@ -1,0 +1,168 @@
+---
+title: "rphysunits: A simple tutorial of using physical units in R"
+author: "Oscar Garcia-Cabrejo"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{rphysunits: A simple tutorial of using physical units in R}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r load_library, echo = F}
+devtools::load_all(".")
+```
+
+
+## Motivation
+
+There are different knowledge areas where calculations are required. Think for example in physics, chemistry, geology and such. One of the most important aspects of these calculations is that they involve physical quantities. A physical quantity is generally the result of a measurement, and this measurement is composed of a value and its corresponding units. The association of values and units make the physical quantities a very special class of object, where there are specific rules to operate on them. For example, it is possible to sum two physical quantities that represent length and the result is also a physical quantity with lenght units. However, it does not make sense to sum a physical quantity that is a length and another that represents energy. This simple examples highlight the importance of using units when dealing with physical quantities: the units provide context to the calculations.
+
+R is a powerful programming language for statistical modeling where some of the variables used in this type of analysis have units. In general this units are handled as metadata and it is the analyst's responsibility to be aware of them during the calculations. In these cases, R can be used as a simple calculator without considering the units of the variables involved. 
+
+In many scientific disciplines people need to constantly work with units in different systems (SI and British), and to help in problem solution in different technical areas it is required to have an efficient way to use and transform quantities that represent the physical variables expresed in different units. R has several  packages to deal with unit conversion, but currently there is no a simple package that allow the analyst to perform operations with physical variables that take into account their units. This is the gap we want to fill with the _rphysunits_. 
+
+Our main goal with the development of _rphysunits_ is to provide a simple R package for users to focus on calculations with physical quantities that take into account their units. Due to the simplicity of this package, our intended audience is mainly undergraduate students in technical areas (sciences, engineering and economics) where calculations involving physical quantities are commonly required.
+
+
+A package with the functionality included in _rphysunits_ has advantages and disadvantages. The advantages of be able to handle units inside R include:
+
++ fun way to introduce coding using a console. R provides an interactive environment to perform calculations, and if unit conversion is included in R then students are more likely to use it and learn more about this programming languague.
++ Good tool for teaching physical interpretation of equations by using step by step calculations and checking for resulting units
+
+The main disadvatange of using this package is that the  students do not pay attention to unit conversion anymore. This potential drawback can be solved if this package is introduced after an explanation of the use of physical quantities and unit conversion, specifically during courses taken in the upper levels of the undergraduate program. 
+
+
+## Structure
+
+The package _rphysunits_ includes three types of objects: physical_quantiy (a S3 class ), a unit_object (variables to define units), and physical constants (variables to represent important constant values such as the speed of light, electron charge, gravity acceleration, etc). 
+
+The physical quantities can be defined using the _physical\_quantity_ function:
+
+```{r physical_quantity_def, echo = TRUE}
+#library(rphysunits)
+a <- physical_quantity(5.6)
+print(class(a))
+```
+or by creating a variable as the result of the mathematical operation with a unit_object as in the following example:
+
+```{r physical_quantity_example, echo = TRUE}
+l1 <- 1.5*u_meter
+l2 <- 4.67*u_m 
+area <- l1*l2
+# Check the class
+print(class(area))
+# Check the value of area
+area
+```
+
+A simple example involving a physical constant is presented as follows. Let's suppose that an electric particle has a charge equal to $6.78$ times the charge of an electron. The physical_quantity associated with this particle can be defined using the constant of electron charge: 
+
+```{r constant_example, echo = TRUE}
+# Define the charge of a particle
+particle_charge <- 6.78*c_electron_charge
+```
+
+
+This package includes the following functions:
+
+* basic arithmetic operations (+,-,\*,/)
+* logical operators (==, <, >, <=, >=, !)
+* additional functions abs() and sqrt()
+* plot() function used to plot vectors of physical_quantities
+* print() function used to display the physical_quantity on the console
+
+
+
+
+
+## Examples
+
+In this section, a set of simple examples where the _rphysunits_ package is used are presented.
+
+
+
+
+### Reynolds number
+
+In fluid mechanics, the Reynolds number is a dimensionless quantity defined as the ratio of the gravitational to viscous forces in a fluid, and therefore it quantifies the importance of these two types of forces for a given set of flow conditions. This number is generally used to compare dynamic conditions between two flow conditions, and therefore it can be used to set the difference between laminar and turbulent flow. In other words, this number can help in the identification of when the turbulence in a fluid appears. The Reynolds number is defined as:
+
+$$
+Re=\frac{vL}{\nu}
+$$
+
+where $v$ is the fluid velocity, $L$ is the characteristic linear scale of the problem (length travelled by the fluid or hydraulic diameter), and $\nu$ is the dynamic viscosity. 
+
+Let's assume we have water moving with velocity $v=6.7$ ft/s through a channel of $10.5$ m. The Reynolds number in this case is given by:
+
+```{r reynolds_number1}
+vel <- 6.7*u_ft/u_s
+L <- 10.5*u_m
+visc <- 1.0e-4*u_poiseuille
+rho <- 1.02*u_g/u_cubic_centimeter
+nu <- visc/rho
+Re <- (vel*L)/nu
+```
+
+From the previous code chunk, the units of each physical quantity are specified using the _u\__ prefix (like in _u\_m_ or _u\_s_) and from these definitions, the required operations can be performed. The resulting value of the Reynolds number is check if is a true nondimensional number: 
+
+```{r reynolds_number2}
+print(is_nondimensional(Re))
+```
+and the value of this number is equal to:
+```{r reynolds_number3}
+print(Re)
+```
+which implies that clearly this flow regime is turbulent (In the case of water if $Re>2000$ then the flow is turbulent).
+
+### Energy calculation
+
+```{r energy_calculation}
+m <- 5.9*u_kg
+vel <- 10.5*u_ft/u_s
+h <- 250*u_in
+kinetic_energy <- 0.5*m*vel^2
+print(kinetic_energy)
+potential_energy <- m*c_gravity_accel*h
+print(potential_energy)
+total_energy <- kinetic_energy + potential_energy
+print(total_energy)
+perc_kinetic <- 100*kinetic_energy/total_energy
+print(perc_kinetic)
+perc_potential <- 100*potential_energy/total_energy
+print(perc_potential)
+```
+
+### Hydrostatic Pressure
+
+The pressure in a fluid at a given depth $h$ is given by:
+
+$$
+P = \rho g h
+$$
+
+where $\rho$ is the fluid density, $g$ is the gravity acceleration and $h$ is the depth. Let's suppose we want to study the variation of pressure inside the planet Earth from the surface to a depth of $5$ km. This pressure can be calculated using the previous equation:
+
+```{r hydrostatic_pressure}
+rho <- 1*u_g/u_cubic_centimeter
+Depth <- seq(0.1,5,0.1)*u_km
+Phydr <- rho*c_gravity_accel*Depth
+print(Phydr)
+```
+
+where the density of water is given in gr/cm3, the acceleration of gravity in m/s2 and the depth in km. 
+
+At depth, another contribution to the pressure is given by the weight of the column of rock above a specific point. This pressure is calculated using the same expression as before, but now the density of the rock is used:
+
+```{r lithostatic_pressure}
+rho_r <- 2.7*u_g/u_cubic_centimeter
+Plit <- rho_r*c_gravity_accel*Depth
+print(Plit)
+```
+
+Now, we can plot the hydrostatic and lithostatic pressure in function of depth using the _plot_ function associated with the _physical\_quantity_ objects:
+
+```{r plot_pressure, fig.height=4, fig.width=4, fig.align='center'}
+plot(Phydr, Depth, type = "l", main = "Pressure", ylim = rev(range(Depth$value)))
+lines(Plit, Depth, ylim = rev(range(h$value)), col = "red")
+```
