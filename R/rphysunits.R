@@ -12,8 +12,8 @@
 #' @docType package
 #' @name rphysunits
 #'
-require('stringi')
-require('graphics')
+#require('stringi')
+#require('graphics')
 #' @title base
 #' @name base
 #' @description base variable
